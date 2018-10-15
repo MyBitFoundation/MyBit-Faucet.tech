@@ -17,11 +17,11 @@ contract TokenFaucet {
   Token public token;
   DB public database;
 
-  uint public tokensInFaucet;
-  uint public balanceWEI;
+  uint public tokenBalance;
+  uint public weiBalance;
 
-  uint public dripAmountToken = uint(10e21);     // User should have at least 10,000 MYB
-  uint public dripAmountWEI = 500 finney;    // User should have at least .5 Ether
+  uint public tokenDripAmount = uint256(10e21);     // User should have at least 10,000 MYB
+  uint public weiDripAmount = 500 finney;    // User should have at least .5 Ether
 
   bytes32 private accessPass;
 
@@ -41,7 +41,7 @@ contract TokenFaucet {
   external {
     require(_token == msg.sender && _token == address(token));
     require(token.transferFrom(_from, this, _amount));
-    tokensInFaucet = tokensInFaucet.add(_amount);
+    tokenBalance = tokenBalance.add(_amount);
     emit LogTokenDeposited(_from, _amount, _data);
   }
 
@@ -49,7 +49,7 @@ contract TokenFaucet {
   function depositWEI()
   external
   payable {
-    balanceWEI = balanceWEI.add(msg.value);
+    weiBalance = weiBalance.add(msg.value);
     emit LogEthDeposited(msg.sender, msg.value);
   }
 
@@ -57,17 +57,17 @@ contract TokenFaucet {
   function withdraw(string _pass)
   external {
     require (keccak256(abi.encodePacked(_pass)) == accessPass);
-    if (token.balanceOf(msg.sender) < dripAmountToken) {
-      uint amountMYB = dripAmountToken.sub(token.balanceOf(msg.sender));
-      tokensInFaucet = tokensInFaucet.sub(amountMYB);
-      token.transfer(msg.sender, amountMYB);
+    if (token.balanceOf(msg.sender) < tokenDripAmount) {
+      uint tokenAmount = tokenDripAmount.sub(token.balanceOf(msg.sender));
+      tokenBalance = tokenBalance.sub(tokenAmount);
+      require(token.transfer(msg.sender, tokenAmount));
     }
-    if (msg.sender.balance < dripAmountWEI) {
-      uint amountWEI = dripAmountWEI.sub(msg.sender.balance);
-      balanceWEI = balanceWEI.sub(amountWEI);
+    if (msg.sender.balance < weiDripAmount) {
+      uint amountWEI = weiDripAmount.sub(msg.sender.balance);
+      weiBalance = weiBalance.sub(amountWEI);
       msg.sender.transfer(amountWEI);
     }
-    emit LogWithdraw(msg.sender, amountMYB, amountWEI);
+    emit LogWithdraw(msg.sender, tokenAmount, amountWEI);
   }
 
   function changePass(bytes32 _newPass)
@@ -82,11 +82,19 @@ contract TokenFaucet {
   external
   anyOwner
   returns (bool) {
-    dripAmountWEI = _newAmountWEI;
-    dripAmountToken = _newAmountMYB;
+    weiDripAmount = _newAmountWEI;
+    tokenDripAmount = _newAmountMYB;
     return true;
   }
 
+  function destroy()
+  external
+  anyOwner
+  returns (bool) {
+    require(token.transfer(msg.sender, weiBalance));
+    selfdestruct(msg.sender);
+    return true;
+  }
   //------------------------------------------------------------------------------------------------------------------
   // Verify that the sender is a registered owner
   //------------------------------------------------------------------------------------------------------------------
@@ -98,6 +106,4 @@ contract TokenFaucet {
   event LogWithdraw(address _sender, uint _amountToken, uint _amountWEI);
   event LogTokenDeposited(address _depositer, uint _amount, bytes _data);
   event LogEthDeposited(address _depositer, uint _amountWEI);
-  event LogEthWithdraw(address _withdrawer, uint _amountWEI);
-  event LogNewUser(address _user);
 }
