@@ -15,8 +15,10 @@ public  {
 }
 ```
 
-##### DepositFunds:
-To deposit tokens you must call `approveAndCall(tokenFaucet.address, amountToDeposit, 0x0)` on the ERC20 token, with the TokenFaucet as the spender. This will approve a transfer and then call the following function.
+##### Deposit Tokens:
+To deposit tokens you must call `approveAndCall(tokenFaucet.address, amountToDeposit, 0x0)` on the ERC20 token contract, with the TokenFaucet as the spender. This will approve a transfer and then call the following function.
+
+:heavy_exclamation_mark: You can leave the data field empty by inputting 0x0
 ```javascript
   function receiveApproval(address _from, uint _amount, address _token, bytes _data)
   external {
