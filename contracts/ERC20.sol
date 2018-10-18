@@ -174,6 +174,14 @@ contract ERC20 is ERC20Interface{
       return byte(0);
     }
 
+    // @notice returns the sha3() hash of a string
+    function getHash(string _string)
+    external
+    pure
+    returns (bytes32) {
+      return keccak256(abi.encodePacked(_string));
+    }
+    
     // ------------------------------------------------------------------------
     // Event: Logs the amount of tokens burned and the address of the burner
     // ------------------------------------------------------------------------
