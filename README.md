@@ -1,5 +1,5 @@
 # MyBit-Faucet.tech
-:fountain: A universal basic income for MyBit test-net tokens :tm:
+:fountain: A universal basic income for MyBit test-net tokens 
 
 ## Overview
 Using the MyBit faucet, any Ethereum account is able to withdraw a minimum amount of Ropsten WEI and MYB tokens if they have the provided password. The password is a minor deterrence for those using the faucet on a simple front-end. If the sending address has less than the minimum amount of WEI or MYB they will be sent enough to cover basic functionality costs.

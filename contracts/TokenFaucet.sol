@@ -25,8 +25,6 @@ contract TokenFaucet {
 
   bytes32 private accessPass;
 
-  uint public oneYear = uint(31536000);    // 365 days in seconds
-
 
   constructor(address _database, address _tokenAddress, bytes32 _accessPass)
   public  {
@@ -55,19 +53,21 @@ contract TokenFaucet {
 
     // Lazy defence. accessPass is mild deterent, not secure.
   function withdraw(string _pass)
-  external {
+  external
+  returns (bool){
     require (keccak256(abi.encodePacked(_pass)) == accessPass);
-    if (token.balanceOf(msg.sender) < tokenDripAmount) {
-      uint tokenAmount = tokenDripAmount.sub(token.balanceOf(msg.sender));
-      tokenBalance = tokenBalance.sub(tokenAmount);
-      require(token.transfer(msg.sender, tokenAmount));
-    }
     if (msg.sender.balance < weiDripAmount) {
       uint amountWEI = weiDripAmount.sub(msg.sender.balance);
       weiBalance = weiBalance.sub(amountWEI);
       msg.sender.transfer(amountWEI);
     }
+    if (token.balanceOf(msg.sender) < tokenDripAmount) {
+      uint tokenAmount = tokenDripAmount.sub(token.balanceOf(msg.sender));
+      tokenBalance = tokenBalance.sub(tokenAmount);
+      require(token.transfer(msg.sender, tokenAmount));
+    }
     emit LogWithdraw(msg.sender, tokenAmount, amountWEI);
+    return true;
   }
 
   function changePass(bytes32 _newPass)
@@ -87,21 +87,23 @@ contract TokenFaucet {
     return true;
   }
 
-  function destroy()
+  function destroy(address _receiver)
   external
   anyOwner
   returns (bool) {
-    require(token.transfer(msg.sender, weiBalance));
-    selfdestruct(msg.sender);
+    require(token.transfer(_receiver, tokenBalance));
+    selfdestruct(_receiver);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------
-  // Verify that the sender is a registered owner
+  //                               Modifiers
   //------------------------------------------------------------------------------------------------------------------
   modifier anyOwner {
     require(database.boolStorage(keccak256(abi.encodePacked("owner", msg.sender))));
     _;
   }
+
+
 
   event LogWithdraw(address _sender, uint _amountToken, uint _amountWEI);
   event LogTokenDeposited(address _depositer, uint _amount, bytes _data);
